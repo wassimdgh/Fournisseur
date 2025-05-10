@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>🏠 Tableau de bord Fournisseurs</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    #navbar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+    }
+
+    #sidebar-container {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      height: calc(100% - 60px);
+      background-color: #34495e;
+    }
+
+    .main-content {
+      margin-left: 200px;
+      margin-top: 60px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .dashboard-box {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    a.button {
+      display: inline-block;
+      margin: 15px;
+      padding: 15px 25px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+    }
+
+    .green { background-color: #2ecc71; }
+    .green:hover { background-color: #27ae60; }
+
+    .blue { background-color: #3498db; }
+    .blue:hover { background-color: #2980b9; }
+
+    .orange { background-color: #f39c12; }
+    .orange:hover { background-color: #e67e22; }
+
+    .gray { background-color: #95a5a6; }
+    .gray:hover { background-color: #7f8c8d; }
+  </style>
+
+  <script>
+    window.onload = function () {
+      fetch('navbar.html')
+        .then(res => res.text())
+        .then(data => document.getElementById("navbar-container").innerHTML = data);
+      fetch('sidebar.html')
+        .then(res => res.text())
+        .then(data => document.getElementById("sidebar-container").innerHTML = data);
+    }
+  </script>
+</head>
+
+<body>
+  <div id="navbar-container"></div>
+  <div id="sidebar-container"></div>
+
+  <div class="main-content">
+    <div class="dashboard-box">
+      <h1>📦 Gestion des Fournisseurs & Commandes</h1>
+
+	  
+      <a href="liste-fournisseurs.html" class="button gray">📋 Liste des Fournisseurs</a><br>
+      <a href="commande.html" class="button blue">📝 Créer une Commande</a><br>
+      <a href="liste-commandes.html" class="button orange">📦 Liste des Commandes</a>
+	  <a href="historique.html" class="button gray">📋 historique</a><br>
+    </div>
+  </div>
+</body>
+</html>

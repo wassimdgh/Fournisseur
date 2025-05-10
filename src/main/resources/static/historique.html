@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Historique des Achats</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+    }
+
+    #navbar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+    }
+
+    #sidebar-container {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      height: calc(100% - 60px);
+      background-color: #34495e;
+    }
+
+    .main-content {
+      margin-left: 200px;
+      margin-top: 60px;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 95%;
+      margin: auto;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background-color: #8e44ad;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Button Styles */
+    .action-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .action-btn:hover {
+      background-color: #c0392b;
+    }
+
+    /* Style du champ de recherche */
+    .search-container {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .search-container input {
+      width: 40%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-container input:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    }
+  </style>
+
+  <script>
+    window.onload = function () {
+      fetch('navbar.html')
+        .then(res => res.text())
+        .then(data => document.getElementById("navbar-container").innerHTML = data);
+      fetch('sidebar.html')
+        .then(res => res.text())
+        .then(data => document.getElementById("sidebar-container").innerHTML = data);
+
+      chargerHistorique();
+    };
+
+    // Charger l'historique des achats
+    async function chargerHistorique() {
+      const res = await fetch("/historiques");
+      const historiques = await res.json();
+      const tbody = document.getElementById("historiqueBody");
+      tbody.innerHTML = "";
+
+      historiques.forEach(h => {
+        const row = `
+          <tr>
+            <td>${h.id}</td>
+            <td>${h.fournisseur?.nom || '—'}</td>  <!-- Affichage du fournisseur -->
+            <td>${h.produit}</td>
+            <td>${h.quantite}</td>
+            <td>${h.delaiLivraison} j</td>
+            <td><button class="action-btn" onclick="supprimerHistorique(${h.id})">🗑️</button></td>
+          </tr>`;
+        tbody.insertAdjacentHTML("beforeend", row);
+      });
+    }
+
+    // Supprimer un historique d'achat
+    async function supprimerHistorique(id) {
+      if (confirm("Supprimer cet historique d'achat ?")) {
+        await fetch(`/historiques/${id}`, { method: 'DELETE' });
+        chargerHistorique();
+      }
+    }
+
+    // Fonction de filtrage des historiques
+    function filterHistorique() {
+      const searchTerm = document.getElementById('search').value.toLowerCase();
+      const rows = document.getElementById('historiqueBody').rows;
+
+      // Filtrer les lignes
+      Array.from(rows).forEach(row => {
+        const fournisseur = row.cells[1].textContent.toLowerCase();
+        const produit = row.cells[2].textContent.toLowerCase();
+        const quantite = row.cells[3].textContent.toLowerCase();
+        const delaiLivraison = row.cells[4].textContent.toLowerCase();
+
+        // Si l'un des critères correspond à la recherche, afficher la ligne, sinon la cacher
+        if (fournisseur.includes(searchTerm) || produit.includes(searchTerm) || quantite.includes(searchTerm) || delaiLivraison.includes(searchTerm)) {
+          row.style.display = ''; // Affiche la ligne
+        } else {
+          row.style.display = 'none'; // Cache la ligne
+        }
+      });
+    }
+  </script>
+</head>
+
+<body>
+  <div id="navbar-container"></div>
+  <div id="sidebar-container"></div>
+
+  <div class="main-content">
+    <h1>📜 Historique des Achats</h1>
+
+    <!-- Champ de recherche -->
+    <div class="search-container">
+      <input type="text" id="search" placeholder="Rechercher par fournisseur, produit, quantité..." oninput="filterHistorique()" />
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fournisseur</th>
+          <th>Produit</th>
+          <th>Quantité</th>
+          <th>Délai Livraison</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="historiqueBody"></tbody>
+    </table>
+  </div>
+</body>
+</html>

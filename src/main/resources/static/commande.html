@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Créer une Commande Achat</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ecf0f1;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Navbar */
+    #navbar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+    }
+
+    /* Sidebar */
+    #sidebar-container {
+      position: fixed;
+      top: 60px; /* hauteur navbar */
+      left: 0;
+      width: 200px;
+      height: calc(100% - 60px);
+      background-color: #34495e;
+    }
+
+    /* Contenu principal */
+    .main-content {
+      margin-left: 200px;
+      margin-top: 60px;
+      padding: 30px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+      color: #34495e;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #fdfdfd;
+    }
+
+    .ligne-block {
+      margin-top: 15px;
+      padding: 15px;
+      border: 1px dashed #bdc3c7;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+    }
+
+    fieldset {
+      border: none;
+      padding: 0;
+    }
+
+    legend {
+      font-weight: bold;
+      color: #2980b9;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .btn {
+      margin-top: 25px;
+      padding: 12px 20px;
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: #2980b9;
+    }
+
+    .btn-secondary {
+      background-color: #2ecc71;
+    }
+
+    .btn-secondary:hover {
+      background-color: #27ae60;
+    }
+  </style>
+
+  <script>
+    window.onload = async function () {
+      // Charger navbar + sidebar
+      fetch('navbar.html')
+        .then(res => res.text())
+        .then(data => document.getElementById("navbar-container").innerHTML = data);
+
+      fetch('sidebar.html')
+        .then(res => res.text())
+        .then(data => document.getElementById("sidebar-container").innerHTML = data);
+
+      // Charger fournisseurs
+      const select = document.getElementById("fournisseurId");
+      try {
+        const res = await fetch("/fournisseurs");
+        const fournisseurs = await res.json();
+        fournisseurs.forEach(f => {
+          const option = document.createElement("option");
+          option.value = f.id;
+          option.textContent = f.nom;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        alert("❌ Erreur lors du chargement des fournisseurs");
+        console.error(err);
+      }
+    };
+
+    function ajouterLigne() {
+      const container = document.getElementById("lignesContainer");
+      const index = container.children.length;
+      const html = `
+        <div class="ligne-block">
+          <label>Produit :</label>
+          <input type="text" name="produit_${index}" placeholder="Nom du produit" required>
+          <label>Quantité :</label>
+          <input type="number" name="quantite_${index}" placeholder="Quantité" required>
+          <label>Prix Unitaire :</label>
+          <input type="number" name="prix_${index}" placeholder="Prix en Dinars" required>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    async function envoyerCommande() {
+      const fournisseurId = document.getElementById("fournisseurId").value;
+      const date = document.getElementById("date").value;
+      const statut = document.getElementById("statut").value;
+      const montant = parseFloat(document.getElementById("montant").value);
+      const delai = parseInt(document.getElementById("delai").value);
+      const lignesDivs = document.getElementById("lignesContainer").children;
+
+      if (!fournisseurId) {
+        alert("Veuillez sélectionner un fournisseur");
+        return;
+      }
+
+      let lignes = [];
+      for (let i = 0; i < lignesDivs.length; i++) {
+        const produit = lignesDivs[i].querySelector(`[name="produit_${i}"]`).value;
+        const quantite = parseInt(lignesDivs[i].querySelector(`[name="quantite_${i}"]`).value);
+        const prixUnitaire = parseFloat(lignesDivs[i].querySelector(`[name="prix_${i}"]`).value);
+        lignes.push({ produit, quantite, prixUnitaire });
+      }
+
+      const commande = {
+        fournisseur: { id: parseInt(fournisseurId) },
+        date: date,
+        statut: statut,
+        montant: montant,
+        delaiLivraison: delai,
+        lignes: lignes
+      };
+
+      try {
+        const response = await fetch('/commande-achats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(commande)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert("✅ Commande enregistrée avec ID : " + result.id);
+        } else {
+          alert("❌ Erreur lors de l'enregistrement !");
+        }
+      } catch (error) {
+        alert("❌ Erreur de connexion au serveur !");
+        console.error(error);
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <!-- navbar et sidebar dynamiques -->
+  <div id="navbar-container"></div>
+  <div id="sidebar-container"></div>
+
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <div class="container">
+      <h1>📝 Créer une Commande Achat</h1>
+
+      <fieldset>
+        <legend>Informations Générales</legend>
+
+        <label>Fournisseur :</label>
+        <select id="fournisseurId" required>
+          <option value="">-- Sélectionnez un fournisseur --</option>
+        </select>
+
+        <label>Date :</label>
+        <input type="date" id="date" required>
+
+        <label>Statut :</label>
+        <input type="text" id="statut" placeholder="En attente, Confirmée, etc.">
+
+        <label>Montant :</label>
+        <input type="number" id="montant" placeholder="Montant total">
+
+        <label>Délai de livraison (jours) :</label>
+        <input type="number" id="delai" placeholder="Ex : 3">
+      </fieldset>
+
+      <fieldset>
+        <legend>Lignes de Commande</legend>
+        <div id="lignesContainer"></div>
+        <button class="btn btn-secondary" type="button" onclick="ajouterLigne()">➕ Ajouter une ligne</button>
+      </fieldset>
+
+      <button class="btn" onclick="envoyerCommande()">📦 Envoyer la Commande</button>
+    </div>
+  </div>
+</body>
+</html>
