@@ -1,6 +1,7 @@
 package com.example.demo.beans;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -21,7 +22,7 @@ public class CommandeAchat {
 
     @ManyToOne
     @JoinColumn(name = "fournisseur_id")
-    @JsonBackReference  // Prevents infinite recursion
+    @JsonIgnoreProperties("commandes") // au lieu de @JsonBackReference
     private Fournisseur fournisseur;
 
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true)

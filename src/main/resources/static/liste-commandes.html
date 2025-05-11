@@ -23,7 +23,7 @@
     /* Sidebar */
     #sidebar-container {
       position: fixed;
-      top: 60px; /* hauteur navbar */
+      top: 60px;
       left: 0;
       width: 200px;
       height: calc(100% - 60px);
@@ -118,7 +118,6 @@
       background-color: #2471a3;
     }
 
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -187,7 +186,6 @@
       color: #e74c3c;
     }
 
-    /* Search Bar */
     .search-container {
       margin-bottom: 20px;
       text-align: center;
@@ -210,7 +208,7 @@
   </style>
 
   <script>
-    window.onload = function () {
+    document.addEventListener("DOMContentLoaded", function () {
       fetch('navbar.html')
         .then(res => res.text())
         .then(data => document.getElementById("navbar-container").innerHTML = data);
@@ -220,47 +218,46 @@
         .then(data => document.getElementById("sidebar-container").innerHTML = data);
 
       chargerCommandes();
-    };
+    });
 
-    // Charger les commandes
-	async function chargerCommandes() {
-	    const res = await fetch('/commande-achats');
-	    const commandes = await res.json();
-	    const tbody = document.getElementById('commandeBody');
-	    tbody.innerHTML = ""; // Clear existing content
+    async function chargerCommandes() {
+      try {
+        const res = await fetch('/commande-achats');
+        const commandes = await res.json();
+        const tbody = document.getElementById('commandeBody');
+        tbody.innerHTML = "";
 
-	    commandes.forEach(c => {
-	        // Ensure that the fournisseur is properly loaded and its name is displayed
-	        const fournisseurNom = c.fournisseur && c.fournisseur.nom ? c.fournisseur.nom : 'Non spécifié';  // Check if fournisseur exists
-	        
-	        const row = `
-	            <tr>
-	                <td>${c.id}</td>
-	                <td>${fournisseurNom}</td> <!-- Display supplier's name -->
-	                <td>${c.date}</td>
-	                <td>${c.statut}</td>
-	                <td>${c.montant} DT</td>
-	                <td>${c.delaiLivraison} j</td>
-	                <td>${c.lignes.length}</td>
-	                <td>
-	                    <button class="info-btn" onclick="openInfoModal(${c.id})">Infos</button>
-	                    <button class="action-btn edit-btn" onclick="openEditModal(${c.id})">📝</button>
-	                    <button class="action-btn" onclick="supprimerCommande(${c.id})">🗑️</button>
-	                </td>
-	            </tr>`;
-	        tbody.insertAdjacentHTML('beforeend', row);
-	    });
-	}
+        commandes.forEach(c => {
+          const fournisseurNom = c.fournisseur && c.fournisseur.nom ? c.fournisseur.nom : 'Non spécifié';
 
+          const row = `
+            <tr>
+              <td>${c.id}</td>
+              <td>${fournisseurNom}</td>
+              <td>${c.date}</td>
+              <td>${c.statut}</td>
+              <td>${c.montant} DT</td>
+              <td>${c.delaiLivraison} j</td>
+              <td>${c.lignes.length}</td>
+              <td>
+                <button class="info-btn" onclick="openInfoModal(${c.id})">Infos</button>
+                <button class="action-btn" onclick="supprimerCommande(${c.id})">🗑️</button>
+              </td>
+            </tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      } catch (error) {
+        console.error("Erreur de chargement des commandes :", error);
+      }
+    }
 
-    // Fonction pour ouvrir le modal des infos de la commande
     function openInfoModal(commandeId) {
       fetch(`/commande-achats/${commandeId}`)
         .then(res => res.json())
         .then(commande => {
           const modalContent = document.getElementById('modalContent');
           modalContent.innerHTML = `<h2>Produits de la Commande ${commande.id}</h2>`;
-          
+
           commande.lignes.forEach(ligne => {
             modalContent.innerHTML += `
               <p>Produit: ${ligne.produit}</p>
@@ -268,16 +265,15 @@
               <p>Prix Unitaire: ${ligne.prixUnitaire} DT</p>
               <hr>`;
           });
-          
+
           document.getElementById('modal').style.display = 'flex';
         });
     }
-	// Fonction pour fermer le modal
-	function closeModal() {
-	  // Hide the modal by setting display to none
-	  document.getElementById('modal').style.display = 'none';
-	}
-    // Supprimer une commande
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
     async function supprimerCommande(id) {
       if (confirm("Supprimer cette commande ?")) {
         await fetch(`/commande-achats/${id}`, { method: 'DELETE' });
@@ -285,71 +281,6 @@
       }
     }
 
-    // Modifier une commande
-    function openEditModal(id) {
-      fetch(`/commande-achats/${id}`)
-        .then(res => res.json())
-        .then(commande => {
-          // Pre-populate modal with current command data
-          document.getElementById('editFournisseur').value = commande.fournisseur ? commande.fournisseur.nom : '';
-          document.getElementById('editDate').value = commande.date;
-          document.getElementById('editStatut').value = commande.statut;
-          document.getElementById('editMontant').value = commande.montant;
-          document.getElementById('editDelaiLivraison').value = commande.delaiLivraison;
-
-          // Show modal
-          document.getElementById('editModal').style.display = 'flex';
-
-          // Handle form submission
-          document.getElementById('editCommandeForm').onsubmit = function(event) {
-            event.preventDefault();
-            updateCommande(id);
-          };
-        })
-        .catch(err => {
-          alert("Erreur lors de la récupération de la commande : " + err);
-        });
-    }
-
-    // Update the command
-    function updateCommande(id) {
-      const fournisseurNom = document.getElementById('editFournisseur').value;
-      const date = document.getElementById('editDate').value;
-      const statut = document.getElementById('editStatut').value;
-      const montant = parseFloat(document.getElementById('editMontant').value);
-      const delaiLivraison = parseInt(document.getElementById('editDelaiLivraison').value);
-
-      const updatedCommande = {
-        fournisseur: { nom: fournisseurNom },  // Send full fournisseur data if necessary
-        date: date,
-        statut: statut,
-        montant: montant,
-        delaiLivraison: delaiLivraison
-      };
-
-      fetch(`/commande-achats/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedCommande)
-      })
-      .then(res => res.json())
-      .then(() => {
-        closeEditModal();
-        chargerCommandes();  // Reload the list of commandes
-      })
-      .catch(err => {
-        alert("Erreur lors de la mise à jour de la commande : " + err);
-      });
-    }
-
-    // Fermer le modal
-    function closeEditModal() {
-      document.getElementById('editModal').style.display = 'none';
-    }
-
-    // Fonction de filtrage des commandes
     function filterCommandes() {
       const searchTerm = document.getElementById('search').value.toLowerCase();
       const rows = document.getElementById('commandeBody').rows;
@@ -377,7 +308,6 @@
     <h1>📦 Liste des Commandes Achat</h1>
     <a href="commande.html" class="btn">➕ Créer une nouvelle commande</a>
 
-    <!-- Champ de recherche -->
     <div class="search-container">
       <input type="text" id="search" placeholder="Rechercher par fournisseur, statut, montant..." oninput="filterCommandes()" />
     </div>
@@ -399,34 +329,10 @@
     </table>
   </div>
 
-  <!-- Modal pour afficher les infos -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">✖</span>
-      <div id="modalContent">
-        <!-- Les produits de la commande seront insérés ici -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal pour modifier la commande -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" onclick="closeEditModal()">✖</span>
-      <h2>Modifier la Commande</h2>
-      <form id="editCommandeForm">
-        <label for="editFournisseur">Fournisseur</label>
-        <input type="text" id="editFournisseur" name="fournisseur" required>
-        <label for="editDate">Date</label>
-        <input type="date" id="editDate" name="date" required>
-        <label for="editStatut">Statut</label>
-        <input type="text" id="editStatut" name="statut" required>
-        <label for="editMontant">Montant</label>
-        <input type="number" id="editMontant" name="montant" step="0.01" required>
-        <label for="editDelaiLivraison">Délai de Livraison</label>
-        <input type="number" id="editDelaiLivraison" name="delaiLivraison" required>
-        <button type="submit" class="btn">Enregistrer les modifications</button>
-      </form>
+      <div id="modalContent"></div>
     </div>
   </div>
 </body>

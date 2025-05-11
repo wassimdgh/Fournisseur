@@ -3,6 +3,7 @@ package com.example.demo.beans;
 import jakarta.persistence.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -18,7 +19,7 @@ public class Fournisseur {
     private Double note;
 
     @OneToMany(mappedBy = "fournisseur", cascade = CascadeType.ALL)
-    @JsonManagedReference // Prevents infinite recursion
+    @JsonIgnore // pour éviter récursion JSON
     private List<CommandeAchat> commandes;
 
     // --- Getters & Setters ---
